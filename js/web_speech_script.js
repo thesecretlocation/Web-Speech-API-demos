@@ -24,7 +24,7 @@ function initSpeechRec() {
     speechRecognition.interimResults = true;
 
     speechRecognition.onstart = function() {
-        console.log("It has started!", new Date().getTime());
+        console.log("It has started!", Date.now());
           
         recognizing = true;
         start_img.src = 'images/mic-animate.gif';
@@ -43,7 +43,7 @@ function initSpeechRec() {
             ignore_onend = true;
         }
         
-        console.error("ERROR", event.error, new Date().getTime());
+        console.error("ERROR", event.error, Date.now());
     };
 
     speechRecognition.onend = function() {
@@ -56,7 +56,7 @@ function initSpeechRec() {
             return;
         }
         
-        console.log("It has ended!", new Date().getTime());
+        console.log("It has ended!", Date.now());
         startButton();
     };
 
@@ -74,7 +74,7 @@ function initSpeechRec() {
         if (typeof(event.results) == 'undefined') {
             //speechRecognition.onend = null;
             //speechRecognition.stop();
-            console.log("No results from SpeechRecognitionEvent",  new Date().getTime());
+            console.log("No results from SpeechRecognitionEvent", Date.now());
             return;
         }
         for (var i = event.resultIndex; i < event.results.length; ++i) {
@@ -86,11 +86,11 @@ function initSpeechRec() {
         }
 
         if (final_transcript.indexOf(match_string) > -1) {
-            alert("Next!");
+            console.warn("Match found!");
         }
 
-        console.log("final_transcript", final_transcript, new Date().getTime());
-        console.log("interim_transcript", interim_transcript, new Date().getTime());
+        console.log("final_transcript", final_transcript, Date.now());
+        console.log("interim_transcript", interim_transcript, Date.now());
         final_transcript = capitalize(final_transcript);
         final_span.innerHTML = linebreak(final_transcript);
         interim_span.innerHTML = linebreak(interim_transcript);
@@ -145,3 +145,10 @@ Available language & accents
 ];
 
 */
+
+// Date.now polyfill
+if (!Date.now) {
+  Date.now = function now() {
+    return + (new Date);
+  };
+}
