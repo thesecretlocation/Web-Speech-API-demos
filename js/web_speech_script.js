@@ -4,6 +4,8 @@ var final_span = document.getElementById("final_span");
 var interim_span = document.getElementById("interim_span");
 var start_img = document.getElementById("start_img");
 var start_button = document.getElementById("start_button");
+var match_results = document.getElementById("match_results");
+var number_of_matches = 0;
 var recognizing = false;
 var ignore_onend;
 var start_timestamp;
@@ -94,6 +96,8 @@ function initSpeechRec() {
             latest_words = "";
             previousMatch = event.results.length;
             console.warn("Match found!", event.results.length);
+            number_of_matches++;
+            match_results.innerHTML = number_of_matches + " matches";
         }
         
         console.log("latest_words", latest_words);
