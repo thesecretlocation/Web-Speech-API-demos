@@ -1,19 +1,29 @@
+html, body, div {
+    font-family: 'Open Sans', arial, sans-serif;   
+}
+body {
+ margin:0px;   
+}
 #info {
     font-size: 20px;
 }
 #div_start {
-    float: left;
+    text-align: center;
 }
 #headline {
     text-decoration: none
 }
 #results {
+    position: absolute;
+    bottom: 0px;
     font-size: 14px;
     font-weight: bold;
     border: 1px solid #ddd;
-    padding: 15px;
+    padding: 1%;
     text-align: left;
-    min-height: 150px;
+    min-height: 100px;
+    width: 96%;
+    margin: 1%;
 }
 #start_button {
     border: 0;

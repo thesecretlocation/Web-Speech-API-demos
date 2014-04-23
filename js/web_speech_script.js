@@ -1,21 +1,36 @@
+var match_string = "next";
 var final_transcript = '';
+var final_span = document.getElementById("final_span");
+var interim_span = document.getElementById("interim_span");
+var start_img = document.getElementById("start_img");
+var start_button = document.getElementById("start_button");
 var recognizing = false;
 var ignore_onend;
 var start_timestamp;
+var speechRecognition;
+
 if (!('webkitSpeechRecognition' in window)) {
     upgrade();
 } else {
-    start_button.style.display = 'inline-block';
-    var recognition = new webkitSpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
+    initSpeechRec();
+}
 
-    recognition.onstart = function() {
+function initSpeechRec() {
+    console.log("initSpeechRec");
+    start_button.style.display = 'block';
+    
+    speechRecognition = new webkitSpeechRecognition();
+    speechRecognition.continuous = true;
+    speechRecognition.interimResults = true;
+
+    speechRecognition.onstart = function() {
+        console.log("It has started!", new Date().getTime());
+          
         recognizing = true;
         start_img.src = 'images/mic-animate.gif';
     };
 
-    recognition.onerror = function(event) {
+    speechRecognition.onerror = function(event) {
         if (event.error == 'no-speech') {
             start_img.src = 'images/mic.gif';
             ignore_onend = true;
@@ -27,9 +42,11 @@ if (!('webkitSpeechRecognition' in window)) {
         if (event.error == 'not-allowed') {
             ignore_onend = true;
         }
+        
+        console.error("ERROR", event.error, new Date().getTime());
     };
 
-    recognition.onend = function() {
+    speechRecognition.onend = function() {
         recognizing = false;
         if (ignore_onend) {
             return;
@@ -38,14 +55,26 @@ if (!('webkitSpeechRecognition' in window)) {
         if (!final_transcript) {
             return;
         }
+        
+        console.log("It has ended!", new Date().getTime());
+        startButton();
     };
 
-    recognition.onresult = function(event) {
+    speechRecognition.onresult = function(event) {
+        /*
+        Example of SpeechRecognitionEvent data
+        event.results: SpeechRecognitionResultList
+        0: SpeechRecognitionResult
+        0: SpeechRecognitionAlternative
+        confidence: 0.009999999776482582
+        transcript: "test"
+        */
+        
         var interim_transcript = '';
         if (typeof(event.results) == 'undefined') {
-            recognition.onend = null;
-            recognition.stop();
-            upgrade();
+            //speechRecognition.onend = null;
+            //speechRecognition.stop();
+            console.log("No results from SpeechRecognitionEvent",  new Date().getTime());
             return;
         }
         for (var i = event.resultIndex; i < event.results.length; ++i) {
@@ -59,11 +88,22 @@ if (!('webkitSpeechRecognition' in window)) {
         if (final_transcript.indexOf(match_string) > -1) {
             alert("Next!");
         }
-    };
+
+        console.log("final_transcript", final_transcript, new Date().getTime());
+        console.log("interim_transcript", interim_transcript, new Date().getTime());
+        final_transcript = capitalize(final_transcript);
+        final_span.innerHTML = linebreak(final_transcript);
+        interim_span.innerHTML = linebreak(interim_transcript);
+
+    };   
 }
 
 function upgrade() {
     start_button.style.visibility = 'hidden';
+    
+    var msg = "This functionality is currently on available in Chrome 25+ desktop, Chrome 33+ for mobile";
+    final_span.innerHTML = msg;
+    console.error(msg);
 }
 
 var two_line = /\n\n/g;
@@ -77,17 +117,31 @@ function capitalize(s) {
     return s.replace(first_char, function(m) { return m.toUpperCase(); });
 }
 
-function startButton(event) {
+function startButton() {
     if (recognizing) {
-        recognition.stop();
+        speechRecognition.stop();
         return;
     }
     final_transcript = '';
-    recognition.lang = 'en-CA'; // English Canada
-    recognition.start();
+    speechRecognition.lang = 'en-CA'; // English Canada
+    speechRecognition.start();
     ignore_onend = false;
     start_img.src = 'images/mic-slash.gif';
-    start_timestamp = event.timeStamp;
+    //start_timestamp = event.timeStamp;
 }
 
-var match_string = "next";
+/*
+Available language & accents
+[['English',
+    ['en-AU', 'Australia'],
+    ['en-CA', 'Canada'],
+    ['en-IN', 'India'],
+    ['en-NZ', 'New Zealand'],
+    ['en-ZA', 'South Africa'],
+    ['en-GB', 'United Kingdom'],
+    ['en-US', 'United States']],
+['Français',
+    ['fr-FR']]
+];
+
+*/
