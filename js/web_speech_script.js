@@ -8,6 +8,9 @@ var recognizing = false;
 var ignore_onend;
 var start_timestamp;
 var speechRecognition;
+var eventResults;
+var latest_words = "";
+var previousMatch = -1;
 
 if (!('webkitSpeechRecognition' in window)) {
     upgrade();
@@ -16,8 +19,7 @@ if (!('webkitSpeechRecognition' in window)) {
 }
 
 function initSpeechRec() {
-    console.log("initSpeechRec");
-    start_button.style.display = 'block';
+    start_button.style.display = 'block'; // show the start button only if supported
     
     speechRecognition = new webkitSpeechRecognition();
     speechRecognition.continuous = true;
@@ -57,7 +59,7 @@ function initSpeechRec() {
         }
         
         console.log("It has ended!", Date.now());
-        startButton();
+        //startButton();
     };
 
     speechRecognition.onresult = function(event) {
@@ -77,20 +79,27 @@ function initSpeechRec() {
             console.log("No results from SpeechRecognitionEvent", Date.now());
             return;
         }
+        eventResults = event.results;
         for (var i = event.resultIndex; i < event.results.length; ++i) {
             if (event.results[i].isFinal) {
-                final_transcript += event.results[i][0].transcript;
+                latest_words = event.results[i][0].transcript;
+                final_transcript += latest_words;
             } else {
                 interim_transcript += event.results[i][0].transcript;
-            }
+            }            
+            console.log("event.results[" + i + "][0].transcript", event.results[i][0].transcript, Date.now());
         }
-
-        if (final_transcript.indexOf(match_string) > -1) {
-            console.warn("Match found!");
+        
+        if ((latest_words.indexOf(match_string) > -1) && (previousMatch != event.results.length)) {
+            latest_words = "";
+            previousMatch = event.results.length;
+            console.warn("Match found!", event.results.length);
         }
-
-        console.log("final_transcript", final_transcript, Date.now());
-        console.log("interim_transcript", interim_transcript, Date.now());
+        
+        console.log("latest_words", latest_words);
+        
+        //console.log("final_transcript", final_transcript, Date.now());
+        //console.log("interim_transcript", interim_transcript, Date.now());
         final_transcript = capitalize(final_transcript);
         final_span.innerHTML = linebreak(final_transcript);
         interim_span.innerHTML = linebreak(interim_transcript);
@@ -106,17 +115,6 @@ function upgrade() {
     console.error(msg);
 }
 
-var two_line = /\n\n/g;
-var one_line = /\n/g;
-function linebreak(s) {
-    return s.replace(two_line, '<p></p>').replace(one_line, '<br>');
-}
-
-var first_char = /\S/;
-function capitalize(s) {
-    return s.replace(first_char, function(m) { return m.toUpperCase(); });
-}
-
 function startButton() {
     if (recognizing) {
         speechRecognition.stop();
@@ -127,7 +125,17 @@ function startButton() {
     speechRecognition.start();
     ignore_onend = false;
     start_img.src = 'images/mic-slash.gif';
-    //start_timestamp = event.timeStamp;
+}
+
+var two_line = /\n\n/g;
+var one_line = /\n/g;
+function linebreak(s) {
+    return s.replace(two_line, '<p></p>').replace(one_line, '<br>');
+}
+
+var first_char = /\S/;
+function capitalize(s) {
+    return s.replace(first_char, function(m) { return m.toUpperCase(); });
 }
 
 /*
@@ -149,6 +157,6 @@ Available language & accents
 // Date.now polyfill
 if (!Date.now) {
   Date.now = function now() {
-    return + (new Date);
+    return (new Date().getTime());
   };
 }
