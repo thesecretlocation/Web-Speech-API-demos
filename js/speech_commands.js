@@ -14,67 +14,66 @@ var eventResults;
 var latest_words = "";
 var previousMatch = -1;
 
-if (('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window)) {
-    initSpeechRec();
-} else {
-    upgrade();
-}
+var speechCommands = {
+	_this: null,
+	match_string: "",
+	speechRecognition:null,
+	
+	init:function() {
+		_this = this;
+		
+		// checks to see if SpeechRecognition otherwise asks the user to upgrade
+		if (('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window)) {
+			_this.setSpeechRecEvents();
+		} else {
+			_this.browserNotSupporter();
+		}
+	},
+	
+	setSpeechRecEvents:function () {
+		_this.speechRecognition = new webkitSpeechRecognition();
+		
+		_this.speechRecognition.continuous = true;
+		_this.speechRecognition.interimResults = true;
 
-function initSpeechRec() {
-    start_button.style.display = 'block'; // show the start button only if supported
-    
-    speechRecognition = new webkitSpeechRecognition();
-    speechRecognition.continuous = true;
-    speechRecognition.interimResults = true;
-
-    speechRecognition.onstart = function() {
-        console.log("It has started!", Date.now());
+		_this.speechRecognition.onstart = _this.speechOnStartHandler;
+		_this.speechRecognition.onerror = _this.speechOnErrorHandler;
+		_this.speechRecognition.onend = _this.speechOnEndHandler;
+		_this.speechRecognition.onresult = _this.speechOnResultHandler;
+	},
+	
+	speechOnStartHandler:function(event) {
+		console.log("It has started!", Date.now());
           
         recognizing = true;
         start_img.src = 'images/mic-animate.gif';
-    };
-
-    speechRecognition.onerror = function(event) {
-        if (event.error == 'no-speech') {
-            start_img.src = 'images/mic.gif';
+	},
+	speechOnErrorHandler:function(event) {
+		if (event.error == 'no-speech') {
+            //start_img.src = 'images/mic.gif';
+            ignore_onend = true;
+        } else if (event.error == 'audio-capture') {
+            //start_img.src = 'images/mic.gif';
+            ignore_onend = true;
+        } else if (event.error == 'not-allowed') {
             ignore_onend = true;
         }
-        if (event.error == 'audio-capture') {
-            start_img.src = 'images/mic.gif';
-            ignore_onend = true;
-        }
-        if (event.error == 'not-allowed') {
-            ignore_onend = true;
-        }
-        
-        console.error("ERROR", event.error, Date.now());
-    };
-
-    speechRecognition.onend = function() {
-        recognizing = false;
+		console.error("ERROR", event.error, Date.now());
+	},
+	speechOnEndHandler:function(event) {
+		recognizing = false;
         if (ignore_onend) {
             return;
         }
-        start_img.src = 'images/mic.gif';
+        //start_img.src = 'images/mic.gif';
         if (!final_transcript) {
             return;
         }
         
         console.log("It has ended!", Date.now());
-        //startButton();
-    };
-
-    speechRecognition.onresult = function(event) {
-        /*
-        Example of SpeechRecognitionEvent data
-        event.results: SpeechRecognitionResultList
-        0: SpeechRecognitionResult
-        0: SpeechRecognitionAlternative
-        confidence: 0.009999999776482582
-        transcript: "test"
-        */
-        
-        var interim_transcript = '';
+	},
+	speechOnResultHandler:function(event) {
+		var interim_transcript = '';
         if (typeof(event.results) == 'undefined') {
             //speechRecognition.onend = null;
             //speechRecognition.stop();
@@ -107,29 +106,30 @@ function initSpeechRec() {
         final_transcript = capitalize(final_transcript);
         final_span.innerHTML = linebreak(final_transcript);
         interim_span.innerHTML = linebreak(interim_transcript);
+	},
+	
+	browserNotSupporter:function() {
+		start_button.style.visibility = 'hidden';
 
-    };   
+		var msg = "This functionality is currently on available in Chrome 25+ desktop, Chrome 33+ for mobile";
+		final_span.innerHTML = msg;
+		console.error(msg);
+	},
+	
+	startButton:function() {
+		if (recognizing) {
+			speechRecognition.stop();
+			return;
+		}
+		final_transcript = '';
+		speechRecognition.lang = 'en-CA'; // English Canada
+		speechRecognition.start();
+		ignore_onend = false;
+		start_img.src = 'images/mic-slash.gif';
+	},	
 }
 
-function upgrade() {
-    start_button.style.visibility = 'hidden';
-    
-    var msg = "This functionality is currently on available in Chrome 25+ desktop, Chrome 33+ for mobile";
-    final_span.innerHTML = msg;
-    console.error(msg);
-}
-
-function startButton() {
-    if (recognizing) {
-        speechRecognition.stop();
-        return;
-    }
-    final_transcript = '';
-    speechRecognition.lang = 'en-CA'; // English Canada
-    speechRecognition.start();
-    ignore_onend = false;
-    start_img.src = 'images/mic-slash.gif';
-}
+window.onload = speechCommands.startButton;
 
 var two_line = /\n\n/g;
 var one_line = /\n/g;
@@ -164,3 +164,4 @@ if (!Date.now) {
     return (new Date().getTime());
   };
 }
+
