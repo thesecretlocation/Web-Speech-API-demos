@@ -1,10 +1,5 @@
 var match_string = "next";
 var final_transcript = '';
-var final_span = document.getElementById("final_span");
-var interim_span = document.getElementById("interim_span");
-var start_img = document.getElementById("start_img");
-var start_button = document.getElementById("start_button");
-var match_results = document.getElementById("match_results");
 var number_of_matches = 0;
 var recognizing = false;
 var ignore_onend;
@@ -16,7 +11,7 @@ var previousMatch = -1;
 
 var speechCommands = {
 	_this: null,
-	match_string: "",
+	match_string: "next page",
 	speechRecognition:null,
 	
 	init:function() {
@@ -46,14 +41,11 @@ var speechCommands = {
 		console.log("It has started!", Date.now());
           
         recognizing = true;
-        start_img.src = 'images/mic-animate.gif';
 	},
 	speechOnErrorHandler:function(event) {
 		if (event.error == 'no-speech') {
-            //start_img.src = 'images/mic.gif';
             ignore_onend = true;
         } else if (event.error == 'audio-capture') {
-            //start_img.src = 'images/mic.gif';
             ignore_onend = true;
         } else if (event.error == 'not-allowed') {
             ignore_onend = true;
@@ -65,7 +57,6 @@ var speechCommands = {
         if (ignore_onend) {
             return;
         }
-        //start_img.src = 'images/mic.gif';
         if (!final_transcript) {
             return;
         }
@@ -75,8 +66,8 @@ var speechCommands = {
 	speechOnResultHandler:function(event) {
 		var interim_transcript = '';
         if (typeof(event.results) == 'undefined') {
-            //speechRecognition.onend = null;
-            //speechRecognition.stop();
+            //this.speechRecognition.onend = null;
+            //this.speechRecognition.stop();
             console.log("No results from SpeechRecognitionEvent", Date.now());
             return;
         }
@@ -96,7 +87,6 @@ var speechCommands = {
             previousMatch = event.results.length;
             console.warn("Match found!", event.results.length);
             number_of_matches++;
-            match_results.innerHTML = number_of_matches + " matches";
         }
         
         console.log("latest_words", latest_words);
@@ -104,32 +94,30 @@ var speechCommands = {
         //console.log("final_transcript", final_transcript, Date.now());
         //console.log("interim_transcript", interim_transcript, Date.now());
         final_transcript = capitalize(final_transcript);
-        final_span.innerHTML = linebreak(final_transcript);
-        interim_span.innerHTML = linebreak(interim_transcript);
+        console.log("transcript:", linebreak(final_transcript));
+        console.log("interim:", linebreak(interim_transcript));
 	},
 	
 	browserNotSupporter:function() {
-		start_button.style.visibility = 'hidden';
-
 		var msg = "This functionality is currently on available in Chrome 25+ desktop, Chrome 33+ for mobile";
-		final_span.innerHTML = msg;
 		console.error(msg);
 	},
 	
-	startButton:function() {
+	startSpeechRecog:function() {
 		if (recognizing) {
-			speechRecognition.stop();
+			_this.speechRecognition.stop();
 			return;
 		}
 		final_transcript = '';
-		speechRecognition.lang = 'en-CA'; // English Canada
-		speechRecognition.start();
+		_this.speechRecognition.lang = 'en-CA'; // English Canada
+		_this.speechRecognition.start();
 		ignore_onend = false;
-		start_img.src = 'images/mic-slash.gif';
 	},	
 }
 
-window.onload = speechCommands.startButton;
+speechCommands.init();
+
+window.onload = speechCommands.startSpeechRecog;
 
 var two_line = /\n\n/g;
 var one_line = /\n/g;
