@@ -14,7 +14,8 @@ var eventResults;
 var latest_words = "";
 var previousMatch = -1;
 
-if (('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window)) {
+// note only webkitSpeechRecognition exists right now, this is just future proofing it
+if (('webkitSpeechRecognition' in window) || ('mozSpeechRecognition' in window) || ('msSpeechRecognition' in window) || ('SpeechRecognition' in window)) {
     initSpeechRec();
 } else {
     upgrade();

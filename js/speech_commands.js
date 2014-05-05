@@ -18,7 +18,8 @@ var speechCommands = {
 		_this = this;
 		
 		// checks to see if SpeechRecognition otherwise asks the user to upgrade
-		if (('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window)) {
+		// note only webkitSpeechRecognition exists right now, this is just future proofing it
+		if (('webkitSpeechRecognition' in window) || ('mozSpeechRecognition' in window) || ('msSpeechRecognition' in window) || ('SpeechRecognition' in window)) {
 			_this.setSpeechRecEvents();
 		} else {
 			_this.browserNotSupporter();
