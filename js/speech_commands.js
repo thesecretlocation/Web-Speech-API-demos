@@ -1,6 +1,7 @@
 var speechCommands = {
 	_this: null,
-	match_string: "next page",
+	match_string: null,
+	trigger_function: null,
 	speechRecognition: null,
 	final_transcript: "",
 	number_of_matches: 0,
@@ -36,6 +37,7 @@ var speechCommands = {
           
         _this.recognizing = true;
 	},
+	
 	speechOnErrorHandler:function(event) {
 		if (event.error == 'no-speech') {
             _this.ignore_onend = true;
@@ -46,6 +48,7 @@ var speechCommands = {
         }
 		console.error("ERROR", event.error, Date.now());
 	},
+	
 	speechOnEndHandler:function(event) {
 		_this.recognizing = false;
 		
@@ -58,6 +61,7 @@ var speechCommands = {
         
         console.log("It has ended!", Date.now());
 	},
+	
 	speechOnResultHandler:function(event) {
 		var interim_transcript = '';
 		var eventResults = event.results;
@@ -70,19 +74,25 @@ var speechCommands = {
         }
 		var latest_words = "";
         for (var i = event.resultIndex; i < eventResults.length; ++i) {
+			var transcriptType = "";
             if (eventResults[i].isFinal) {
                 latest_words = eventResults[i][0].transcript;
                 _this.final_transcript += latest_words;
+				transcriptType = "final transcript";
             } else {
                 interim_transcript += eventResults[i][0].transcript;
+				transcriptType = "interim transcript";
             }            
-            console.log("eventResults[" + i + "][0].transcript", eventResults[i][0].transcript, Date.now());
+            console.log("eventResults[" + i + "][0].transcript", eventResults[i][0].transcript, "confidence", eventResults[i][0].confidence, transcriptType, Date.now());
         }
         
-        if ((latest_words.indexOf(_this.match_string) > -1) && (_this.previousMatch != eventResults.length)) {
+        if ((_this.match_string !== null) && (latest_words.indexOf(_this.match_string) > -1) && (_this.previousMatch != eventResults.length)) {
             latest_words = "";
             _this.previousMatch = eventResults.length;
             console.warn("Match found!", eventResults.length);
+			if (_this.trigger_function !== null) {
+				_this.trigger_function();
+			}
             _this.number_of_matches++;
         }
         
@@ -99,6 +109,11 @@ var speechCommands = {
 		console.error("This functionality is currently on available in Chrome 25+ desktop, Chrome 33+ for Android");
 	},
 	
+	setMatchStringAndTrigger:function(match_string, trigger_function) {
+		_this.match_string = match_string;
+		_this.trigger_function = trigger_function;
+	},
+	
 	startSpeechRecog:function() {
 		if (_this.recognizing) {
 			_this.speechRecognition.stop();
@@ -112,6 +127,7 @@ var speechCommands = {
 };
 
 speechCommands.init();
+speechCommands.setMatchStringAndTrigger("hello world", matchFound);
 
 window.onload = speechCommands.startSpeechRecog;
 
@@ -142,6 +158,15 @@ Available language & accents
 
 */
 
+/*
+	Example of SpeechRecognitionEvent data
+	event.results: SpeechRecognitionResultList
+	0: SpeechRecognitionResult
+	0: SpeechRecognitionAlternative
+	confidence: 0.009999999776482582
+	transcript: "test"
+*/
+		
 // Date.now polyfill
 if (!Date.now) {
   Date.now = function now() {
@@ -149,3 +174,6 @@ if (!Date.now) {
   };
 }
 
+function matchFound() {
+	alert("MATCH FOUND!");
+}
